@@ -1,5 +1,5 @@
 #include "message.h"
-#Include "string.h"
+#include "string.h"
 
 void message_partial_init(message_partial *mp) {
     mp->bufferSize = 1024;
@@ -44,7 +44,7 @@ void message_partial_parse_dummy(message_partial *mp, message *m, int index) {
 }
 
 void message_partial_parse_send_message(message_partial *mp, message *m, int index) {
-    message_send_message *msm = (*message_send_message)malloc(sizeof(message_send_message));
+    message_send_message *msm = (message_send_message*)malloc(sizeof(message_send_message));
     m->data = msm;
 
     msm->destUid = atoi(mp->buffer+index);
@@ -58,17 +58,17 @@ void message_partial_parse_send_message(message_partial *mp, message *m, int ind
 }
 
 void message_partial_parse_authenticate(message_partial *mp, message *m, int index) {
-    message_authenticate *ma = (*message_authenticate)malloc(sizeof(message_authenticate));
+    message_authenticate *ma = (message_authenticate*)malloc(sizeof(message_authenticate));
     m->data = ma;
 
-    ma->uuid = atoi(mp->buffer[index]);
+    ma->uuid = atoi(mp->buffer+index);
     while(index < mp->bufferPos && mp->buffer[index++]);
 
-    ma->password = strlen(mp->buffer[index]);
-    strcpy(ma->password, mp->buffer[index]);
+    ma->password = malloc(strlen(mp->buffer+index)*sizeof(char));
+    strcpy(ma->password, mp->buffer+index);
     while(index < mp->bufferPos && mp->buffer[index++]);
 
-    ma->version = atoi(mp->buffer[index]);
+    ma->version = atoi(mp->buffer+index);
 }
 
 //this doesn't need any parsing. It's an empty message
@@ -102,7 +102,7 @@ message* message_partial_parse(message_partial *mp) {
     while(i < mp->bufferPos && mp->buffer[i++]);
 
     if(m->command < sizeof(message_partial_parse_map)/sizeof(void *(message_partial*, message*, int)))
-        *message_partial_parse_map[m->command](mp, m, i);
+        message_partial_parse_map[m->command](mp, m, i);
     else
         return NULL;
 
