@@ -1,0 +1,92 @@
+
+
+* Users never log out (whatsapp like)
+* All conversations are "rooms" (persistent on server? or stored client side)
+* Asynchronous or synchronous?
+* Ignore multiple servers for now (DHT's)
+
+
+Identification
+* Identified by UUID
+* Client caches UUID
+* Acts as client hash
+
+Asynchonous vs Synchronous
+--------------------------
+* Async
+    - won't scale to many users unless using multi threading (wrong)
+    - interesting to see how i'd implement twisted like functionality in C
+    - hard
+
+* Synchonous
+    - One thread per connection
+    - Boring way of doing it
+
+Sessions
+--------
+* Every connection creates a session
+* Stores authenticatino information
+* Client socket etc
+
+Thoughts
+--------
+* Messages are sent and received in one thread but all other processing
+  takes place in a thread pool
+
+Protocol
+--------
+* All messages must be in the same format
+* All messages must reply with a response
+* delimiter is NULL byte (0)
+
+Request:
+length - command type - command uuid - timestamp (maybe) - data
+length includes length of itself
+
+Response:
+length - command type - command uuid - error code
+if no error error code is 0
+
+data types
+----------
+strings
+    - start with 2 byte length thing
+    - llimited to 65536 characters
+
+time / date
+    - unix time stamp
+
+boolean
+    - 1 or 0
+
+1. send message (client to server)
+destUid
+timestamp
+message
+
+2. receive message (server to client)
+originUid
+timestamp
+message
+
+3. authenticate (client to server)
+request:
+uuid
+password
+version
+
+response:
+authenticated (boolean)
+moveto (if not 0 is a string containing address of server we must connect to)
+
+4. roster request
+request:
+blank
+
+response:
+number of friends
+[
+uuid
+presence - integer
+username
+]

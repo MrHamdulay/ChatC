@@ -1,0 +1,3 @@
+Simple chat server written in C. Not meant to be used for anything. The sole reason for it's existance is education purposes. 
+
+It should eventually be a distributed system thing. I'm thinking of using some fom of DHT's.
