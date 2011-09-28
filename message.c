@@ -39,22 +39,39 @@ void message_partial_free(message_partial *mp) {
     free(mp->buffer);
 }
 
+void message_partial_parse_dummy(message_partial *mp, message *m, int index) {
+    m->data = NULL;
+}
+
 void message_partial_parse_send_message(message_partial *mp, message *m, int index) {
     message_send_message *msm = (*message_send_message)malloc(sizeof(message_send_message));
     m->data = msm;
 
-    msm->
+    msm->destUid = atoi(mp->buffer+index);
+    while(index < mp->bufferPos && mp->buffer[index++]);
+
+    msm->timestamp = atoi(mp->buffer+index);
+    while(index < mp->bufferPos && mp->buffer[index++]);
+
+    msm->message = malloc(strlen(mp->buffer+index)*sizeof(char));
+    strcpy(msm->message, mp->buffer+index);
 }
 
 void message_partial_parse_authenticate(message_partial *mp, message *m, int index) {
     message_authenticate *ma = (*message_authenticate)malloc(sizeof(message_authenticate));
     m->data = ma;
+
+    ma->uuid = atoi(mp->buffer[index]);
+    while(index < mp->bufferPos && mp->buffer[index++]);
+
+    ma->password = strlen(mp->buffer[index]);
+    strcpy(ma->password, mp->buffer[index]);
+    while(index < mp->bufferPos && mp->buffer[index++]);
+
+    ma->version = atoi(mp->buffer[index]);
 }
 
-void message_partial_parse_dummy(message_partial *mp, message *m, int index) {
-    m->data = NULL;
-}
-
+//this doesn't need any parsing. It's an empty message
 void message_partial_parse_get_roster(message_partial *mp, message *m, int index) {
     message_partial_parse_dummy(mp, m, index);
 }
