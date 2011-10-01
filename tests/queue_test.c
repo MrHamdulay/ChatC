@@ -1,54 +1,51 @@
 #include <stdlib.h>
+#include <stdio.h>
+
 #include "test.h"
 #include "../queue.h"
 
 int failed = 0;
 
-struct data {
-    int d;
-};
-typedef struct data data;
-
-int compare_int(void *i1, void *i2) {
-    return ((data*)i1)->d<((data*)i2)->d;
-}
-
-//TODO: do locking tests
-
 int main() {
-    queue *q = (queue*)malloc(sizeof(queue));
-    queue_init(q, compare_int);
-    test("Heap null after initialisation", q->pq->heap != NULL);
+    queue list;
+    queue_init(&list);
+    test("Length 0 at creation", queue_len(&list) == 0);
 
-    data d[5] = {{1}, {2}, {3}, {4}, {5}};
+    queue_append(&list, (void*)7);
+    queue_remove(&list, list->pq);
+    test("Empty removal", list->pq == NULL && queue_len(&list) == 0 && list.tail == NULL);
 
-    queue_insert(q, &d[4]);
-    queue_insert(q, &d[1]);
-    queue_insert(q, &d[3]);
-    queue_insert(q, &d[0]);
-    queue_insert(q, &d[2]);
+    for(int i=1; i<6; i++)
+        queue_append(&list, (void *)i);
+    test("Length assertion", (int)queue_len(&list) == 5);
 
-    test("Queue size test", q->pq->numElements == 5);
-    test("min head test", ((data*)queue_top(q))->d == d[0].d);
-
-    for(int i=0; i<4; i++) {
-        queue_pop(q);
-        test("remove test", ((data*)queue_top(q))->d == d[i+1].d);
+    queue_node *cur = list->pq;
+    int pass = 1;
+    for(int i=1; i<6; i++) {
+        if((int)cur->data != i)
+            pass = 0;
+        cur = cur->next;
     }
-    queue_pop(q);
-    test("empty test", queue_top(q) == NULL);
-    test("empty test length", q->pq->numElements == 0);
+    test("Value assertion", pass);
 
-    queue_insert(q, &d[4]);
-    test("single item test p1", ((data*)queue_top(q))->d == d[4].d);
-    queue_pop(q);
-    test("single item test p2", q->pq->numElements == 0);
+    cur = list->pq;
+    for(int i=0; i<4; i++)
+        cur = cur->next;
+    test("Tail check", cur == list.tail);
 
-    for(int i=0; i<100; i++)
-        queue_insert(q, &d[i%5]);
-    test("massive test", q->pq->numElements == 100);
-    for(int i=0; i<100; i++) 
-        queue_pop(q);
+    for(int i=1; i<5; i++)
+        cur = cur->prev;
+    test("Reverse iteration", cur == list->pq);
 
-    return failed ? -1 : 0;
+    queue_prepend(&list, 0);
+    test("Prepending", list->pq->data == 0);
+
+    queue_remove(&list, list->pq);
+    test("Remove", list->pq->data == 1);
+
+    queue_remove(&list, list->pq->next);
+    test("Removing", list->pq->data == 1);
+    test("Removing", list->pq->next->data == 3);
+
+    printf("\nNum failures: %d\n", failed);
 }

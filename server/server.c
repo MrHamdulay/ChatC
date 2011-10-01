@@ -1,8 +1,10 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <string.h>
+#include <fcntl.h>
 
 #include "config.h"
 
@@ -13,6 +15,20 @@ int init_server_socket(int *sock, int port) {
     if(*sock < 0) {
         printf("ERROR: Unable to initialise socket\n");
         return 0;
+    }
+
+    int time_wait_stuff = 1;
+    setsockopt(*sock, SOL_SOCKET, SO_REUSEADDR, &time_wait_stuff, sizeof(time_wait_stuff));
+
+    //set non blocking flag
+    int flags = fcntl(*sock, F_GETFL, 0);
+    if(flags < 0) {
+        printf("ERROR: Couldn't set socket flags\n");
+        exit(1);
+    }
+    if(fcntl(*sock, F_SETFL, flags | O_NONBLOCK)) {
+        printf("ERROR: Couldn't set socket non-blocking\n");
+        exit(1);
     }
 
     //not sure how necessary

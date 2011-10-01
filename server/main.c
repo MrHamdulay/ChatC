@@ -7,7 +7,6 @@
 #include <sys/socket.h>
 #include <sys/select.h>
 #include <netinet/in.h>
-#include <fcntl.h>
 #include <time.h>
 
 #include <pthread.h>
@@ -33,16 +32,6 @@ int check_for_connections(int sock) {
 
     int csock = accept(sock, (struct sockaddr *)&client_addr, &clientlen);
 
-    //set non blocking flag
-    int flags = fcntl(csock, F_GETFL, 0);
-    if(flags < 0) {
-        printf("ERROR: Couldn't set socket flags\n");
-        exit(1);
-    }
-    if(fcntl(csock, F_SETFL, flags | O_NONBLOCK)) {
-        printf("ERROR: Couldn't set socket non-blocking\n");
-        exit(1);
-    }
 
     return csock;
 }
@@ -122,6 +111,7 @@ int main() {
         
         printf("1\n");
         build_socket_list(&client_sessions, &readsocketset);
+        FD_ZERO(&readsocketset);
         FD_SET(sock, &readsocketset);
 
         int s = select(client_sessions.len, &readsocketset, 0, 0, &timeout);
