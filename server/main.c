@@ -17,6 +17,7 @@
 #include "../session.h"
 #include "../llist.h"
 #include "../queue.h"
+#include "worker.h"
 
 int sock;
 int running;
@@ -96,25 +97,35 @@ int main() {
         return -1;
 
     //A linked list might not be the most efficient for this
-    llist clientSessions;
-    llist_init(&clientSessions);
+    llist client_sessions;
+    llist_init(&client_sessions);
+
+    queue message_queue;
+    queue_init(&message_queue);
 
     //TODO: initialise thread pool
+    const int num_workers = 4;
+    pthread_t workers[num_workers];
+    for(int i=0; i<num_workers; i++) {
+        pthread_create(&workers[i], NULL, worker_run, (void*)&message_queue);
+    }
     
     //select stuff
     fd_set readsocketset;
     fd_set writesocketset;
     fd_set errorsocketset;
     struct timeval timeout;
-    
+
     while(running) {
         timeout.tv_sec = 1;
         timeout.tv_usec = 0;
         
-        build_socket_list(&clientSessions, &readsocketset);
+        printf("1\n");
+        build_socket_list(&client_sessions, &readsocketset);
         FD_SET(sock, &readsocketset);
 
-        int s = select(clientSessions.len, &readsocketset, 0, 0, &timeout);
+        int s = select(client_sessions.len, &readsocketset, 0, 0, &timeout);
+        printf("2\n");
         if(s < 0) {
             printf("ERROR: Select error\n");
             exit(1);
@@ -124,11 +135,12 @@ int main() {
             int csock = check_for_connections(sock);
             session clientSession;
             session_init(&clientSession, csock);
-            llist_append(&clientSessions, (void*)&clientSession);
+            llist_append(&client_sessions, (void*)&clientSession);
         }
 
+        printf("2\n");
         //check if each session exists in the read socket thingE
-        llist_node *cur = clientSessions.head;
+        llist_node *cur = client_sessions.head;
         while(cur != NULL) {
             int sock = ((session*)cur->data)->sock;
             //check readsocketset
@@ -148,13 +160,15 @@ int main() {
     printf("Exiting..\n");
     
     //free memory
-    llist_node *cur = clientSessions.head;
+    llist_node *cur = client_sessions.head;
     while(cur != NULL) {
         session *sess = (session*)cur->data;
         session_end(sess);
         free(sess);
         cur = cur->next;
     }
-    llist_free(&clientSessions);
+    llist_free(&client_sessions);
     close(sock);
+
+    pthread_exit(NULL);
 }

@@ -1,5 +1,6 @@
 #ifndef __QUEUE_H
 #define __QUEUE_H
+#include <pthread.h>
 /*
  * Locking queue data structure
  */
@@ -9,8 +10,7 @@
 struct queue {
     pqueue *pq;
 
-    int readLock;
-    int writeLock;
+    pthread_mutex_t mutex;
 };
 typedef struct queue queue;
 

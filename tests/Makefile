@@ -3,6 +3,11 @@ pqueue:
 	gcc -o pqueue_test.o pqueue_test.c -c -g -std=c99
 	gcc -o pqueue_test pqueue_test.o pqueue.o -g -std=c99
 
+queue: pqueue
+	gcc -o queue.o ../queue.c -c -g -std=c99
+	gcc -o queue_test.o queue_test.c -c -g -std=c99
+	gcc -o queue_test queue_test.o queue.o pqueue.o -g -std=c99
+
 llist:
 	gcc -o llist.o ../llist.c -c -g -std=c99 -Wall
 llist_test: llist
